@@ -2,19 +2,17 @@ import {SafeAreaView, ScrollView, StyleSheet, View} from "react-native";
 import {useEffect, useState} from "react";
 import {StatusBar} from "expo-status-bar";
 import {vh, vw} from "react-native-expo-viewport-units";
-import {addStore, createStoresTable, getRecords, getStore} from '../helpers/Database'
-import FavoriteButton from '../components/FavoriteButton'
-import CardSkeleton from '../components/CardSkeleton'
+import {addStore, getRecords, getStore} from '../helpers/Database'
+import FavoriteButton from '../components/Store/FavoriteButton'
+import CardSkeleton from '../components/Store/CardSkeleton'
 import {KEY} from "@env"
-import {Pressable} from "react-native";
 import {RefreshControl} from "react-native";
-import {Box, Container, Text} from "native-base";
+import {Box, Button, Center, Container, Flex, Heading, Text} from "native-base";
 import { useColorMode } from "native-base";
+import * as Notifications from '../helpers/Notifications'
 
 
-const Stores = ({
-                    props, navigation: {navigate}
-                }) => {
+const Stores = ({props, navigation: {navigate}}) => {
     const [input, setInput] = useState({value: null})
 
     const {colorMode} = useColorMode();
@@ -57,21 +55,23 @@ const Stores = ({
         //const photo = store.photos?.[0] ?? undefined
         //const reference = photo?.photo_reference ?? undefined
         if (!blacklist(store.name)) return null
-        return <Box variant="storeCard" radius={30} key={index}>
-            <Box variant="storeCardInner">
+        return <Box variant="storeCard" bg={colorMode ==='dark' ? '#1e1e1e': '#002145'} radius={30} key={index}>
+            <Box variant="storeCardInner" >
+                <Flex justify={'flex-start'} px={vw(5)}>
+                <Heading variant="storeCardHeading" color={colorMode ==='dark' ? '#a9a9a9': '#ffffff'}>{store.name}</Heading>
                 <Text >{store.rating}</Text>
-                <Text >{store.name}</Text>
+
+                </Flex>
                 {/*<Text style={styles.card_title}>{store.favorite.toString()}</Text>*/}
                 <Box variant="storeCardActionsContainer">
-                    <Pressable onPress={() => {
-                        navigate('Map', {id: store.place_id});
-                    }
-                    }>
-                        <Text>
-                            SHOW ON MAP
-                        </Text>
-                    </Pressable>
                     <FavoriteButton initalState={store.favorite} placeId={store.place_id} name={store.name}/>
+                    <Flex direction={'row'} justify={"space-between"} align={"center"} ></Flex>
+                        <Button onPress={() => {
+                            navigate('Map', {id: store.place_id});
+                            Notifications.send(`${store.name} is close!`, 'Go take a look')
+                        }}>
+                            Show on map
+                        </Button>
                 </Box>
 
             </Box>
@@ -215,7 +215,10 @@ const Stores = ({
                     <StatusBar style="auto"/>
                 </View>
             </Container>
+            <Container
+            >
 
+            </Container>
         </SafeAreaView>
     )
 }
@@ -223,10 +226,13 @@ const Stores = ({
 const styles = StyleSheet.create({
     container: {
         display: 'flex',
-        height: vh(80),
+        height: vh(100),
         width: vw(100),
         alignItems: 'center',
         justifyContent: 'center',
+        paddingVertical: vh(5),
+        paddingBottom: vh(10),
+
         // backgroundColor: 'red'
     },
     cardActionsContainer: {

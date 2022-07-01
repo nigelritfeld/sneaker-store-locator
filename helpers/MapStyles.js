@@ -1,3 +1,8 @@
+/**
+ * Dark map style
+ * Generated with: https://mapstyle.withgoogle.com/
+ * @type {[{stylers: [{color: string}], elementType: string},{stylers: [{visibility: string}], elementType: string},{stylers: [{color: string}], elementType: string},{stylers: [{color: string}], elementType: string},{featureType: string, stylers: [{color: string}], elementType: string},null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]}
+ */
 const darkMap = [
     {
         "elementType": "geometry",
@@ -184,6 +189,11 @@ const darkMap = [
         ]
     }
 ]
+/**
+ * Light map style
+ * Generated with: https://mapstyle.withgoogle.com/
+ * @type {[{stylers: [{color: string}], elementType: string},{stylers: [{color: string}], elementType: string},{stylers: [{color: string}], elementType: string},{featureType: string, stylers: [{color: string}], elementType: string},{featureType: string, stylers: [{color: string}], elementType: string},null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]}
+ */
 const lightMap = [
     {
         "elementType": "geometry",
@@ -399,5 +409,4 @@ const lightMap = [
         ]
     }
 ]
-
 export {darkMap, lightMap}

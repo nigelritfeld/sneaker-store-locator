@@ -1,63 +1,93 @@
-// import 'react-native-gesture-handler';
-import {NavigationContainer, DefaultTheme, DarkTheme} from '@react-navigation/native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import Stores from "./screens/Stores";
-import Test from "./screens/Test";
-import Map from "./screens/Map";
-import Settings from "./screens/Settings";
-import Ionicons from "react-native-vector-icons/Ionicons";
-import {
-    NativeBaseProvider,
-    Box,
-    extendTheme,
-    themeTools,
-    Center,
-    StatusBar,
-    useColorMode,
-    Text,
-    useToast
-} from "native-base";
-import {useCallback, useEffect, useState} from "react";
-import * as Database from "./helpers/Database"
-import Events from "./screens/Events";
-import {deleteStoresTables} from "./helpers/Database";
-import {Appearance} from "react-native";
-import DrawerNavigation from "./components/DrawerNavigation";
-import * as Auth from './helpers/Authentication';
+import {NavigationContainer} from '@react-navigation/native';
+import {NativeBaseProvider, Box, useColorMode, Text, useToast, extendTheme} from "native-base";
+import {useEffect, useRef, useState} from "react";
+import * as LocalStorage from "./helpers/LocalStorage"
+import {MyDrawer} from "./navigation/DrawerNavigation";
 import {mode, theme} from "./helpers/Theme";
-import {vh, vw} from "react-native-expo-viewport-units";
 import NetInfo from "@react-native-community/netinfo";
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
+import * as TaskManager from "expo-task-manager";
+
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+    }),
+});
 
 
-
-const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
-
-export default function App() {
-    const [test, setTest] = useState('INITAL TEST')
-    const [stores, setStores] = useState([])
-    const [favoriteStoresCount, setFavoriteStoresCount] = useState(0)
-    const [themeModes, setThemeModes] = useState(Appearance.getColorScheme());
-    const [authenticated, setAuthenticated] = useState(false)
-    const {colorMode, setColorMode} = useColorMode()
-    const getFavoriteStoresCount = async () => {
-        const stores = await Database.getRecords('stores')
-
-        console.log('---------APPJS---------')
-        console.log(typeof stores)
-        console.log(stores)
-        console.log('---------APPJS---------')
+TaskManager.defineTask('GET_BACKGROUND_LOCATION', ({data: {locations}, error}) => {
+    if (error) {
+        console.log(error)
+        // check `error.message` for more details.
+        return;
     }
+    console.log('Received new locations', locations);
+});
+export default function App() {
+
+    // States
+    const [stores, setStores] = useState([])
+    const {colorMode, setColorMode} = useColorMode()
+    const [expoPushToken, setExpoPushToken] = useState('');
+    const [notification, setNotification] = useState(false);
+    const notificationListener = useRef();
+    const responseListener = useRef();
+
+    // Feedback messages
     const toast = useToast();
 
+    // Functions
+    async function registerForPushNotificationsAsync() {
+        let token;
+        if (Device.isDevice) {
+            const {status: existingStatus} = await Notifications.getPermissionsAsync();
+            let finalStatus = existingStatus;
+            if (existingStatus !== 'granted') {
+                const {status} = await Notifications.requestPermissionsAsync();
+                finalStatus = status;
+            }
+            if (finalStatus !== 'granted') {
+                alert('Failed to get push token for push notification!');
+                return;
+            }
+            token = (await Notifications.getExpoPushTokenAsync()).data;
+            console.log(token);
+        } else {
+            alert('Must use physical device for Push Notifications');
+        }
 
+        if (Platform.OS === 'android') {
+            Notifications.setNotificationChannelAsync('default', {
+                name: 'default',
+                importance: Notifications.AndroidImportance.MAX,
+                vibrationPattern: [0, 250, 250, 250],
+                lightColor: '#FF231F7C',
+            });
+        }
+        return token
+    }
 
     useEffect(() => {
-        (async() => {
-            const darkModes = await mode()
-            setThemeModes(darkModes ? 'light' : 'dark' )
-            setColorMode(themeModes)
+        (async () => {
+            const darkMode = await mode()
+            // Changing to initial settings
+            extendTheme({
+                config: {
+                    initialColorMode: darkMode ? 'light' : 'dark',
+                },
+            })
+            // Registering for push notifications
+            registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
+            notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+                setNotification(notification);
+            });
+            responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+                console.log(response);
+            });
+            const stores = await LocalStorage.getStores()
             const unsubscribe = NetInfo.addEventListener(state => {
                 toast.show({
                     render: () => {
@@ -67,54 +97,18 @@ export default function App() {
                     },
                 })
             });
-            // Auth.onFaceId()
-            //     .then(r => {
-            //         const {success} = r
-            //         if (success){
-            //             setAuthenticated(true)
-            //             console.log(`Authenticated ${authenticated}`)
-            //         }
-            //     })
-            Database.getCount('stores').then(count => console.log(`Saved stores = ${count}`))
+            return () => {
+                Notifications.removeNotificationSubscription(notificationListener.current);
+                Notifications.removeNotificationSubscription(responseListener.current);
+            };
         })()
-    },[])
+    }, [colorMode])
 
-
-
-    console.log('creating component..')
-    console.log(authenticated)
     return (
         <NativeBaseProvider theme={theme}>
-            <StatusBar
-                backgroundColor="#61dafb"
-                barStyle={colorMode === 'dark' ? 'dark': 'light-content'}
-            />
-            {
-            <DrawerNavigation props={{setFavoriteStoresCount,favoriteStoresCount, authenticated, themeModes}}/>
-            }
-            {/*<NavigationContainer theme={theme === 'dark' ?  MyTheme: DarkTheme}>*/}
-            {/*    <Tab.Navigator*/}
-            {/*        screenOptions={({route}) => ({*/}
-            {/*            tabBarActiveTintColor: 'tomato',*/}
-            {/*            tabBarInactiveTintColor: 'gray',*/}
-            {/*            tabBarShowLabel: true,*/}
-            {/*            tabBarStyle: {*/}
-            {/*                borderRadius:40,*/}
-            {/*                marginBottom:40,*/}
-            {/*                backgroundColor: theme === 'light' ?  'red': ''*/}
-
-            {/*            },*/}
-            {/*        })}>*/}
-            {/*        <Tab.Screen name="Stores" options={{tabBarBadge: favoriteStoresCount}}>*/}
-            {/*            {props => <Stores {...props} props={{*/}
-            {/*                setFavoriteStoresCount*/}
-            {/*            }}/>}*/}
-            {/*        </Tab.Screen>*/}
-            {/*        <Tab.Screen name="Settings" component={Settings}/>*/}
-            {/*        <Tab.Screen name="Map" component={Map}/>*/}
-            {/*        <Tab.Screen name="Events" component={Events}/>*/}
-            {/*    </Tab.Navigator>*/}
-            {/*</NavigationContainer>*/}
+            <NavigationContainer>
+                <MyDrawer/>
+            </NavigationContainer>
         </NativeBaseProvider>
     );
 }

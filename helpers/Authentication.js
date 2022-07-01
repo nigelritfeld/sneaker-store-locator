@@ -1,5 +1,10 @@
 import * as LocalAuthentication from "expo-local-authentication";
 
+/**
+ * Authenticates user using biometric auh hardware
+ * @param message
+ * @returns {Promise<{success: true}|{success: false, error: string, warning?: string}>}
+ */
 const onFaceId = async message => {
     try {
         const hasRequiredHardware = await LocalAuthentication.hasHardwareAsync()

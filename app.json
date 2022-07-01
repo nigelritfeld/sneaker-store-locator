@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -21,9 +20,16 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
+        "UIBackgroundModes": [
+          "location"
+        ],
         "NSFaceIDUsageDescription": "Store Locator needs to use Face ID / Touch ID to authenticate you",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Store Locator needs to use Location to send notifications when you near a store",
+        "NSLocationAlwaysUsageDescription": "Store Locator needs to use Location to send notifications when you near a store",
+        "NSLocationWhenInUseUsageDescription": "Store Locator needs to use Location to send notifications when you near a store",
         "NSRemindersUsageDescription": "Store Locator needs permission to create new calendar items to store new events"
-      }
+      },
+      "bundleIdentifier": "com.1004416.sneaker-store-locator"
     },
     "android": {
       "adaptiveIcon": {

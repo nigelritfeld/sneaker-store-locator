@@ -1,24 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 
-export async function getCount(table) {
-    return new Promise((resolve, reject) => {
-        try {
-            db.transaction(function (txn) {
-                txn.executeSql(
-                    "SELECT * FROM ?",
-                    [table],
-                    (transaction, resultSet) => {
-                        resolve(resultSet.rows._array.length)
-                    }
-                );
-            })
-        } catch (e) {
-            reject(e.message)
-        }
-
-    })
-}
-
+// Creating new databse
 const db = SQLite.openDatabase('db.test', "1.0",'development',200000,(database)=>{
 
     try {
@@ -46,88 +28,19 @@ const db = SQLite.openDatabase('db.test', "1.0",'development',200000,(database)=
     }
 })
 
-export function createTables() {
-    createStoresTable()
+/**
+ * Migrates all tables
+ * @returns {*}
+ */
+const createTables = () => {
+    return createStoresTable()
         .then(createSettingsTable)
+        .catch(e=>console.error(e))
 }
-
-
-const create = (table, where, input) => {
-    db.transaction(
-        (tx) => {
-            tx.executeSql(
-                `INSERT INTO ${table} ()
-                 VALUES ()${where} = ?;`,
-                [input ? 1 : 0],
-                (_, {rows: {_array}}) => setItems(_array)
-            );
-        },
-        (error) => {
-            alert(error.message)
-        },
-        () => {
-            alert('Succes')
-        }
-    );
-}
-const update = () => {
-    db.transaction(
-        (tx) => {
-            tx.executeSql(
-                `select *
-                 from items
-                 where done = ?;`,
-                [1 ? 1 : 0],
-                (_, {rows: {_array}}) => setItems(_array)
-            );
-        },
-        (error) => {
-            alert(error.message)
-        },
-        () => {
-            alert('Succes')
-        }
-    );
-}
-const read = () => {
-    db.transaction(
-        (tx) => {
-            tx.executeSql(
-                `select *
-                 from items
-                 where done = ?;`,
-                [1 ? 1 : 0],
-                (_, {rows: {_array}}) => setItems(_array)
-            );
-        },
-        (error) => {
-            alert(error.message)
-        },
-        () => {
-            alert('Succes')
-        }
-    );
-}
-const remove = () => {
-    db.transaction(
-        (tx) => {
-            tx.executeSql(
-                `select *
-                 from items
-                 where done = ?;`,
-                [1 ? 1 : 0],
-                (_, {rows: {_array}}) => setItems(_array)
-            );
-        },
-        (error) => {
-            alert(error.message)
-        },
-        () => {
-            alert('Succes')
-        }
-    );
-}
-
+/**
+ * Creates stores table
+ * @returns {Promise<unknown> | Promise.Promise}
+ */
 const createStoresTable = () => {
     return new Promise((resolve, reject) => {
         try {
@@ -164,6 +77,10 @@ const createStoresTable = () => {
 
     })
 };
+/**
+ * Creates settings table
+ * @returns {Promise<unknown> | Promise.Promise}
+ */
 const createSettingsTable = () => {
     return new Promise((resolve, reject) => {
         try {
@@ -192,6 +109,16 @@ const createSettingsTable = () => {
 
     })
 };
+/**
+ * Add new store to stores table
+ * @param place_id
+ * @param name
+ * @param favorite
+ * @param geometry
+ * @param business_status
+ * @param vicinity
+ * @returns {Promise<unknown> | Promise.Promise}
+ */
 const addStore = (place_id, name, favorite, geometry, business_status, vicinity) => {
     return new Promise((resolve, reject) => {
         try {
@@ -205,17 +132,22 @@ const addStore = (place_id, name, favorite, geometry, business_status, vicinity)
                         // todo: callback function
                     },
                     function (tx, error) {
-                        console.log(error)
+                        // console.log(error)
                     }
                 );
             })
-            // alert('SQLite Database and Table Successfully Created...');
         } catch (e) {
             reject(e.message)
         }
 
     })
 };
+/**
+ * Updates store in database
+ * @param place_id
+ * @param isFavorite
+ * @returns {Promise<unknown> | Promise.Promise}
+ */
 const updateFavoriteStore = (place_id, isFavorite) => {
     return new Promise((resolve, reject) => {
         console.log('Starting try and catch')
@@ -266,6 +198,11 @@ const updateFavoriteStore = (place_id, isFavorite) => {
 
     })
 };
+/**
+ * Get store from database
+ * @param place_id
+ * @returns {Promise<unknown> | Promise.Promise}
+ */
 const getStore = (place_id) =>{
     return new Promise((resolve, reject) => {
         try {
@@ -292,6 +229,11 @@ const getStore = (place_id) =>{
     })
 
 }
+/**
+ * Removes store from database
+ * @param id
+ * @returns {Promise<unknown> | Promise.Promise}
+ */
 const removeStore = (id) => {
     return new Promise((resolve, reject) => {
         try {
@@ -316,10 +258,14 @@ const removeStore = (id) => {
 
     })
 };
+/**
+ * Get all store records
+ * @param table
+ * @returns {Promise<unknown> | Promise.Promise}
+ */
 const getRecords = (table = `stores`) => {
     return new Promise((resolve, reject) => {
         try {
-            console.log('Stating')
             db.transaction(function (txn) {
 
                 txn.executeSql(
@@ -333,13 +279,15 @@ const getRecords = (table = `stores`) => {
                     }
                 );
             })
-            console.log('Ending')
-
         } catch (e) {
             reject(e.message)
         }
     })
 }
+/**
+ * Deletes stores table
+ * @returns {Promise<unknown> | Promise.Promise}
+ */
 const deleteStoresTables = () => {
     return new Promise((resolve, reject) => {
         try {
@@ -356,14 +304,9 @@ const deleteStoresTables = () => {
 
 }
 
-
-
 export {
-    create,
+    createTables,
     getRecords,
-    update,
-    read,
-    remove,
     createStoresTable,
     deleteStoresTables,
     addStore,
